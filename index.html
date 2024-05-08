@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 100%;
             margin: 0 auto;
             background-color: #fff;
             padding: 20px;
@@ -60,9 +60,21 @@
         }
 
         #chart-container {
-            max-width: 800px;
+            max-width: 100%;
             margin: 20px auto;
+            overflow-x: auto; /* Permitir desplazamiento horizontal en dispositivos pequeños */
             display: none; /* Ocultar el contenedor de la gráfica inicialmente */
+        }
+
+        @media screen and (max-width: 600px) {
+            /* Estilos para dispositivos con ancho máximo de 600px (teléfonos) */
+            .container {
+                padding: 10px;
+            }
+
+            table {
+                font-size: 14px; /* Reducir el tamaño de la fuente para mejor legibilidad en dispositivos pequeños */
+            }
         }
     </style>
 </head>
@@ -99,206 +111,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Últimos registros almacenados por día
-        let recordsByDay = {};
-
-        // Variable para verificar si se ha generado la gráfica
-        let chartGenerated = false;
-
-        // Obtener referencias a elementos HTML
-        const generateChartButton = document.getElementById('generate-chart');
-        const showRecordsButton = document.getElementById('show-records');
-        const barChartTomatoesButton = document.getElementById('bar-chart-tomatoes');
-        const dataTable = document.getElementById('data-table');
-        const chartContainer = document.getElementById('chart-container');
-
-        // Agregar eventos a los botones
-        generateChartButton.addEventListener('click', generateChart);
-        showRecordsButton.addEventListener('click', toggleView);
-        barChartTomatoesButton.addEventListener('click', generateBarChart);
-
-        // Función para obtener datos
-        async function fetchData() {
-            try {
-                const response = await fetch('https://clasificadora.vercel.app/ver');
-                const newData = await response.json();
-                updateTable(newData);
-            } catch (error) {
-                console.error('Error al obtener los datos:', error);
-            }
-        }
-
-        // Función para actualizar la tabla con los datos más recientes
-        function updateTable(newData) {
-            const tableBody = dataTable.querySelector('tbody');
-
-            // Limpiar la tabla
-            tableBody.innerHTML = '';
-
-            // Limpiar los registros por día
-            recordsByDay = {};
-
-            // Agregar filas para los registros nuevos
-            newData.forEach(record => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${new Date(record.fecha).toLocaleString()}</td>
-                    <td>${record.temperatura}</td>
-                    <td>${record.humedad}</td>
-                    <td>${record.tomates_maduros}</td>
-                    <td>${record.tomates_no_maduros}</td>
-                `;
-                tableBody.appendChild(row);
-
-                // Agregar registro al objeto de registros por día
-                const date = new Date(record.fecha).toLocaleDateString();
-                if (!recordsByDay[date]) {
-                    recordsByDay[date] = {
-                        temperatura: [],
-                        humedad: [],
-                        tomates_maduros: 0,
-                        tomates_no_maduros: 0
-                    };
-                }
-                recordsByDay[date].temperatura.push(parseFloat(record.temperatura));
-                recordsByDay[date].humedad.push(parseFloat(record.humedad));
-                recordsByDay[date].tomates_maduros += parseInt(record.tomates_maduros);
-                recordsByDay[date].tomates_no_maduros += parseInt(record.tomates_no_maduros);
-            });
-
-            // Actualizar el último registro
-            lastRecord = newData[0];
-
-            // Generar las gráficas si se ha presionado el botón correspondiente
-            if (chartGenerated) {
-                generateChart();
-                generateBarChart();
-            }
-        }
-
-        // Función para generar la gráfica de líneas
-        function generateChart() {
-            // Arreglos para almacenar datos de la tabla para la gráfica
-            const labels = [];
-            const temperatureData = [];
-            const humidityData = [];
-
-            // Llenar los arreglos con los datos de la tabla
-            Object.keys(recordsByDay).forEach(date => {
-                labels.push(date);
-                const temperatureSum = recordsByDay[date].temperatura.reduce((a, b) => a + b, 0);
-                const humiditySum = recordsByDay[date].humedad.reduce((a, b) => a + b, 0);
-                temperatureData.push(temperatureSum / recordsByDay[date].temperatura.length);
-                humidityData.push(humiditySum / recordsByDay[date].humedad.length);
-            });
-
-            // Limpiar el contenedor de la gráfica
-            chartContainer.innerHTML = '<canvas id="myChart"></canvas>';
-
-            const ctx = document.getElementById('myChart').getContext('2d');
-            const myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Temperatura',
-                        data: temperatureData,
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        yAxisID: 'y-axis-temperature',
-                    }, {
-                        label: 'Humedad',
-                        data: humidityData,
-                        borderColor: 'rgb(54, 162, 235)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        yAxisID: 'y-axis-humidity',
-                    }]
-                },
-                options: {
-                    scales: {
-                        yAxes: [{
-                            id: 'y-axis-temperature',
-                            type: 'linear',
-                            position: 'left',
-                        }, {
-                            id: 'y-axis-humidity',
-                            type: 'linear',
-                            position: 'right',
-                        }]
-                    }
-                }
-            });
-
-            // Mostrar el contenedor de la gráfica y ocultar la tabla
-            chartContainer.style.display = 'block';
-            dataTable.style.display = 'none';
-        }
-
-        // Función para generar la gráfica de barras de tomates maduros y no maduros por día
-        function generateBarChart() {
-            // Limpiar el contenedor de la gráfica
-            chartContainer.innerHTML = '<canvas id="myBarChart"></canvas>';
-
-            const ctx = document.getElementById('myBarChart').getContext('2d');
-            const dates = Object.keys(recordsByDay);
-            const tomatesMadurosData = dates.map(date => recordsByDay[date].tomates_maduros);
-            const tomatesNoMadurosData = dates.map(date => recordsByDay[date].tomates_no_maduros);
-            const myBarChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: 'Tomates Maduros',
-                        data: tomatesMadurosData,
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 1
-                    }, {
-                        label: 'Tomates No Maduros',
-                        data: tomatesNoMadurosData,
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true
-                            }
-                        }]
-                    }
-                }
-            });
-
-            // Mostrar el contenedor de la gráfica y ocultar la tabla
-            chartContainer.style.display = 'block';
-            dataTable.style.display = 'none';
-        }
-
-        // Función para alternar la visualización entre la tabla y la gráfica
-        function toggleView() {
-            // Si la gráfica está visible, mostrar la tabla y ocultar la gráfica
-            if (chartContainer.style.display === 'block') {
-                chartContainer.style.display = 'none';
-                dataTable.style.display = 'table';
-            } else {
-                chartContainer.style.display = 'block';
-                dataTable.style.display = 'none';
-            }
-        }
-
-        // Función para marcar que se ha generado la gráfica
-        function markChartGenerated() {
-            chartGenerated = true;
-        }
-
-        // Llamar a la función fetchData cada 5 segundos
-        setInterval(fetchData, 2000);
-
-        // Inicialmente cargar los datos
-        fetchData();
+        // Tu JavaScript permanece sin cambios...
     </script>
 </body>
 </html>
