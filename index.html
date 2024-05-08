@@ -88,20 +88,22 @@
         <button id="bar-chart-tomatoes">Clasificacion</button>
 
         <!-- Contenido de la página -->
-        <table id="data-table">
-            <thead>
-                <tr>
-                    <th>Fecha y Hora</th>
-                    <th>Temperatura</th>
-                    <th>Humedad</th>
-                    <th>Tomates Maduros</th>
-                    <th>Tomates No Maduros</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Aquí se mostrarán los datos -->
-            </tbody>
-        </table>
+        <div style="overflow-x: auto;">
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Temperatura</th>
+                        <th>Humedad</th>
+                        <th>Tomates Maduros</th>
+                        <th>Tomates No Maduros</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Aquí se mostrarán los datos -->
+                </tbody>
+            </table>
+        </div>
 
         <!-- Contenedor para la gráfica -->
         <div id="chart-container">
