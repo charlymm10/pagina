@@ -25,6 +25,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto; /* Permitir desplazamiento horizontal en dispositivos pequeños */
         }
 
         button {
@@ -53,6 +54,9 @@
             border: 1px solid #ddd;
             padding: 12px;
             text-align: left;
+            white-space: nowrap; /* Evitar el desbordamiento de texto en dispositivos pequeños */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Agregar puntos suspensivos si el contenido es demasiado largo */
         }
 
         th {
@@ -62,7 +66,6 @@
         #chart-container {
             max-width: 100%;
             margin: 20px auto;
-            overflow-x: auto; /* Permitir desplazamiento horizontal en dispositivos pequeños */
             display: none; /* Ocultar el contenedor de la gráfica inicialmente */
         }
 
